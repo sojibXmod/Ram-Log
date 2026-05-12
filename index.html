@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মেসেজ অ্যাপ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .show-message {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            background: #f8f9fa;
+            color: #333;
+            resize: vertical;
+            cursor: default;
+        }
+
+        .show-message:focus {
+            outline: none;
+        }
+
+        .label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+        }
+    </style>
+    
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAV9XwfLSZIHIZrOPKGnnsSUBetqboqFPw",
+            authDomain: "sojib-xmod.firebaseapp.com",
+            databaseURL: "https://sojib-xmod-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sojib-xmod",
+            storageBucket: "sojib-xmod.firebasestorage.app",
+            messagingSenderId: "137389787618",
+            appId: "1:137389787618:web:61f46be46cc55a986e11bb",
+            measurementId: "G-H3V3G1XQN2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Single fixed location
+        const singleMessageRef = ref(database, 'currentMessage');
+
+        // DOM Elements
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const showMessage = document.getElementById('showMessage');
+
+        // Load and show current message from Firebase
+        onValue(singleMessageRef, (snapshot) => {
+            const messageText = snapshot.val();
+            if (messageText) {
+                showMessage.value = messageText;
+            } else {
+                showMessage.value = '';
+            }
+        });
+
+        // Send/Save message to Firebase
+        async function sendMessage() {
+            const messageText = messageInput.value.trim();
+            
+            if (!messageText) {
+                return;
+            }
+            
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'সেভ হচ্ছে...';
+            
+            try {
+                await set(singleMessageRef, messageText);
+                messageInput.value = '';
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'সেভ করুন';
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <textarea 
+            id="messageInput" 
+            class="message-input" 
+            rows="4" 
+            placeholder="আপনার মেসেজ লিখুন..."
+        ></textarea>
+        <button id="sendBtn" class="send-btn">সেভ করুন</button>
+        
+        <div class="label">সেভ করা মেসেজ:</div>
+        <textarea 
+            id="showMessage" 
+            class="show-message" 
+            rows="4" 
+            readonly
+            placeholder="কোনো মেসেজ সেভ করা নেই"
+        ></textarea>
+    </div>
+</body>
+</html>
