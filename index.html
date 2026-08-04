@@ -330,6 +330,15 @@
             display: inline-block;
         }
 
+        .flash {
+            animation: flashGreen 0.6s ease;
+        }
+
+        @keyframes flashGreen {
+            0% { background-color: #d4edda; }
+            100% { background-color: transparent; }
+        }
+
         @media (max-width: 600px) {
             .card {
                 padding: 1.5rem 1rem;
@@ -381,7 +390,30 @@
 </head>
 <body>
 
-        
+    <div class="card">
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <div class="nav-brand">
+                <i class="fas fa-database"></i>
+                <span>Realtime DB</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="active">Data</a>
+                <a href="#">Rules</a>
+                <a href="#">Backups</a>
+                <a href="#">Usage</a>
+                <a href="#">Extensions</a>
+            </div>
+        </div>
+
+        <!-- Error banner -->
+        <div class="error-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Protect your Realtime Database resources</strong> from abuse, such as billing fraud or phishing
+            </div>
+        </div>
+
         <!-- Database URL -->
         <div class="url-block">
             <i class="fas fa-link"></i>
@@ -467,7 +499,7 @@
         // ========== FIREBASE IMPORTS ==========
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
-        import { getDatabase, ref, onValue, get } from "firebase/database";
+        import { getDatabase, ref, onValue } from "firebase/database";
 
         // ========== CONFIG ==========
         const firebaseConfig = {
@@ -494,199 +526,118 @@
         const connectionStatusEl = document.getElementById('connectionStatus');
         const dataStatusEl = document.getElementById('dataStatus');
 
-        // ========== UPDATE UI ==========
+        // ========== UPDATE UI WITH FLASH EFFECT ==========
         function updateUI(link, password) {
-            if (link) {
+            let updated = false;
+
+            if (link && link !== linkValueEl.textContent) {
                 linkValueEl.textContent = link;
                 extraLinkEl.textContent = link;
+                updated = true;
             }
-            if (password) {
+            if (password && password !== passValueEl.textContent) {
                 passValueEl.textContent = password;
                 extraPassEl.textContent = password;
+                updated = true;
+            }
+
+            if (updated) {
+                // Flash effect to indicate change
+                document.querySelector('.creds-panel').classList.add('flash');
+                setTimeout(() => {
+                    document.querySelector('.creds-panel').classList.remove('flash');
+                }, 700);
+                dataStatusEl.innerHTML = `<i class="fas fa-sync-alt" style="color:#0f6bff;"></i> 🔄 Real-time update received`;
+                console.log('🔄 UI updated with new credentials');
             }
         }
 
-        // ========== READ FROM DATABASE ==========
-        function fetchCredentials() {
-            const dbRef = ref(database);
-
-            // Try to read from the specific path where password is stored
-            // Based on screenshot: Password link: @ivalidAccount777, Password: 215801283
-            // Let's try to read from common paths
-            const pathsToTry = [
-                '/',
-                '/password',
-                '/pass',
-                '/pwd',
-                '/credentials',
-                '/credentials/password',
-                '/user/password',
-                '/passwordLink',
-                '/link',
-                '/account'
-            ];
-
-            let foundLink = null;
-            let foundPass = null;
-
-            // First try root read to see all data
-            get(dbRef)
-                .then((snapshot) => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        console.log('📦 Full database data:', JSON.stringify(data, null, 2));
-
-                        // Deep search for credentials
-                        function deepSearch(obj, path = '') {
-                            if (!obj || typeof obj !== 'object') return;
-
-                            for (const [key, value] of Object.entries(obj)) {
-                                const currentPath = path ? `${path}/${key}` : key;
-
-                                // Check if this is a string value
-                                if (typeof value === 'string') {
-                                    // Check for link/account patterns
-                                    if (value.includes('@') || 
-                                        key.toLowerCase().includes('link') || 
-                                        key.toLowerCase().includes('account') || 
-                                        key.toLowerCase().includes('email')) {
-                                        if (!foundLink || value.includes('@')) {
-                                            foundLink = value;
-                                            console.log(`🔗 Found link at ${currentPath}: ${value}`);
-                                        }
-                                    }
-                                    // Check for password patterns - any string that looks like a password
-                                    if (key.toLowerCase().includes('pass') || 
-                                        key.toLowerCase().includes('pwd') || 
-                                        key.toLowerCase().includes('password')) {
-                                        foundPass = value;
-                                        console.log(`🔑 Found password at ${currentPath}: ${value}`);
-                                    }
-                                    // Also check if value is numeric and length >= 4 (likely a password)
-                                    if (/^\d{4,10}$/.test(value) && !foundPass) {
-                                        foundPass = value;
-                                        console.log(`🔑 Found numeric password at ${currentPath}: ${value}`);
-                                    }
-                                }
-
-                                // Recursively search nested objects
-                                if (typeof value === 'object' && value !== null) {
-                                    deepSearch(value, currentPath);
-                                }
-                            }
-                        }
-
-                        deepSearch(data);
-
-                        // If we found credentials, update UI
-                        if (foundLink || foundPass) {
-                            updateUI(foundLink || '@ivalidAccount777', foundPass || '215801283');
-                            dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
-                            connectionStatusEl.textContent = '✅ Connected';
-                            connectionStatusEl.style.color = '#1a7a3a';
-                            console.log('✅ UI updated with found credentials');
-                        } else {
-                            // Try reading specific paths directly
-                            const linkRef = ref(database, 'link');
-                            const passRef = ref(database, 'password');
-                            
-                            Promise.all([
-                                get(linkRef).then(snap => snap.val()),
-                                get(passRef).then(snap => snap.val())
-                            ]).then(([linkVal, passVal]) => {
-                                if (linkVal || passVal) {
-                                    updateUI(linkVal || '@ivalidAccount777', passVal || '215801283');
-                                    dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
-                                    connectionStatusEl.textContent = '✅ Connected';
-                                    connectionStatusEl.style.color = '#1a7a3a';
-                                } else {
-                                    // Keep default values
-                                    dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Connected, showing default credentials`;
-                                    connectionStatusEl.textContent = '✅ Connected';
-                                    connectionStatusEl.style.color = '#1a7a3a';
-                                }
-                            });
-                        }
-                    } else {
-                        dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Database empty, showing default credentials`;
-                        connectionStatusEl.textContent = '✅ Connected (empty)';
-                        connectionStatusEl.style.color = '#1a7a3a';
-                    }
-                })
-                .catch((error) => {
-                    console.error('❌ Error reading database:', error);
-                    dataStatusEl.innerHTML = `<i class="fas fa-exclamation-circle" style="color:#d43b3b;"></i> ⚠️ Error: ${error.message}`;
-                    connectionStatusEl.textContent = '⚠️ Connection issue';
-                    connectionStatusEl.style.color = '#b52a2a';
-                });
-        }
-
-        // ========== SETUP REAL-TIME LISTENER ==========
+        // ========== REAL-TIME LISTENER (with deep search) ==========
         function setupRealtimeListener() {
             const dbRef = ref(database);
 
             onValue(dbRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    console.log('🔄 Realtime update received');
+                    console.log('📦 Real-time data received:', JSON.stringify(data, null, 2));
 
                     let foundLink = null;
                     let foundPass = null;
 
-                    function deepSearch(obj) {
+                    // Deep recursive search
+                    function deepSearch(obj, path = '') {
                         if (!obj || typeof obj !== 'object') return;
 
                         for (const [key, value] of Object.entries(obj)) {
+                            const currentPath = path ? `${path}/${key}` : key;
+
                             if (typeof value === 'string') {
+                                // Look for link/account (contains @ or key includes link/account/email)
                                 if (value.includes('@') || 
                                     key.toLowerCase().includes('link') || 
                                     key.toLowerCase().includes('account') || 
                                     key.toLowerCase().includes('email')) {
                                     if (!foundLink || value.includes('@')) {
                                         foundLink = value;
+                                        console.log(`🔗 Found link at ${currentPath}: ${value}`);
                                     }
                                 }
+                                // Look for password (key includes pass/pwd/password OR numeric 4-10 digits)
                                 if (key.toLowerCase().includes('pass') || 
                                     key.toLowerCase().includes('pwd') || 
                                     key.toLowerCase().includes('password')) {
                                     foundPass = value;
+                                    console.log(`🔑 Found password at ${currentPath}: ${value}`);
                                 }
+                                // Also catch any numeric string of length 4-10 (likely a password)
                                 if (/^\d{4,10}$/.test(value) && !foundPass) {
                                     foundPass = value;
+                                    console.log(`🔑 Found numeric password at ${currentPath}: ${value}`);
                                 }
                             }
+
+                            // Recurse into objects
                             if (typeof value === 'object' && value !== null) {
-                                deepSearch(value);
+                                deepSearch(value, currentPath);
                             }
                         }
                     }
+
                     deepSearch(data);
 
+                    // If we found anything, update UI
                     if (foundLink || foundPass) {
                         updateUI(foundLink || '@ivalidAccount777', foundPass || '215801283');
-                        dataStatusEl.innerHTML = `<i class="fas fa-sync-alt" style="color:#0f6bff;"></i> 🔄 Real-time update received`;
+                        connectionStatusEl.textContent = '✅ Live';
+                        connectionStatusEl.style.color = '#1a7a3a';
+                    } else {
+                        // No credentials found, but connection is live
+                        connectionStatusEl.textContent = '✅ Live (no creds)';
+                        connectionStatusEl.style.color = '#1a7a3a';
+                        dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ No credentials in DB`;
                     }
-                    connectionStatusEl.textContent = '✅ Live';
+                } else {
+                    // Database exists but empty
+                    connectionStatusEl.textContent = '✅ Live (empty)';
                     connectionStatusEl.style.color = '#1a7a3a';
+                    dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Database empty`;
                 }
             }, (error) => {
-                console.warn('⚠️ Realtime listener error:', error);
+                console.error('❌ Realtime listener error:', error);
+                connectionStatusEl.textContent = '⚠️ Connection error';
+                connectionStatusEl.style.color = '#b52a2a';
+                dataStatusEl.innerHTML = `<i class="fas fa-exclamation-circle" style="color:#d43b3b;"></i> ⚠️ ${error.message}`;
             });
         }
 
         // ========== START ==========
         console.log('🚀 Firebase app initialized. Database URL:', firebaseConfig.databaseURL);
+        console.log('👂 Setting up real-time listener...');
 
-        // Fetch credentials
-        fetchCredentials();
+        // Start listening immediately
+        setupRealtimeListener();
 
-        // Set up real-time listener
-        setTimeout(() => {
-            setupRealtimeListener();
-        }, 500);
-
-        console.log('✅ Firebase Realtime Database is active and listening.');
-        console.log('📝 Looking for credentials in the database...');
+        console.log('✅ Real-time listener active. Any change in the database will update the UI instantly.');
     </script>
 
 </body>
