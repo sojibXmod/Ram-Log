@@ -35,7 +35,6 @@
             border-radius: 36px;
             box-shadow: 0 24px 48px -16px rgba(0, 20, 60, 0.18), 0 8px 20px -4px rgba(0, 0, 0, 0.04);
             padding: 2rem 2rem 2.2rem;
-            transition: 0.2s;
         }
 
         .nav-bar {
@@ -534,65 +533,104 @@
         function fetchCredentials() {
             const dbRef = ref(database);
 
-            // First try: direct root read
+            // Try to read from the specific path where password is stored
+            // Based on screenshot: Password link: @ivalidAccount777, Password: 215801283
+            // Let's try to read from common paths
+            const pathsToTry = [
+                '/',
+                '/password',
+                '/pass',
+                '/pwd',
+                '/credentials',
+                '/credentials/password',
+                '/user/password',
+                '/passwordLink',
+                '/link',
+                '/account'
+            ];
+
+            let foundLink = null;
+            let foundPass = null;
+
+            // First try root read to see all data
             get(dbRef)
                 .then((snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.val();
-                        console.log('📦 Root data:', data);
+                        console.log('📦 Full database data:', JSON.stringify(data, null, 2));
 
-                        let foundLink = null;
-                        let foundPass = null;
-
-                        // Recursive search function
-                        function searchObject(obj) {
+                        // Deep search for credentials
+                        function deepSearch(obj, path = '') {
                             if (!obj || typeof obj !== 'object') return;
 
                             for (const [key, value] of Object.entries(obj)) {
-                                // If value is a string, check if it looks like credentials
+                                const currentPath = path ? `${path}/${key}` : key;
+
+                                // Check if this is a string value
                                 if (typeof value === 'string') {
-                                    // Check for link patterns (contains @ or looks like account)
+                                    // Check for link/account patterns
                                     if (value.includes('@') || 
-                                        (key.toLowerCase().includes('link') || 
-                                         key.toLowerCase().includes('account') || 
-                                         key.toLowerCase().includes('email'))) {
-                                        // Only set if not already found or if it's more specific
+                                        key.toLowerCase().includes('link') || 
+                                        key.toLowerCase().includes('account') || 
+                                        key.toLowerCase().includes('email')) {
                                         if (!foundLink || value.includes('@')) {
                                             foundLink = value;
+                                            console.log(`🔗 Found link at ${currentPath}: ${value}`);
                                         }
                                     }
-                                    // Check for password patterns
-                                    if ((/^\d{4,10}$/.test(value) || value.length >= 4) &&
-                                        (key.toLowerCase().includes('pass') || 
-                                         key.toLowerCase().includes('pwd') || 
-                                         key.toLowerCase().includes('password'))) {
+                                    // Check for password patterns - any string that looks like a password
+                                    if (key.toLowerCase().includes('pass') || 
+                                        key.toLowerCase().includes('pwd') || 
+                                        key.toLowerCase().includes('password')) {
                                         foundPass = value;
+                                        console.log(`🔑 Found password at ${currentPath}: ${value}`);
+                                    }
+                                    // Also check if value is numeric and length >= 4 (likely a password)
+                                    if (/^\d{4,10}$/.test(value) && !foundPass) {
+                                        foundPass = value;
+                                        console.log(`🔑 Found numeric password at ${currentPath}: ${value}`);
                                     }
                                 }
 
                                 // Recursively search nested objects
                                 if (typeof value === 'object' && value !== null) {
-                                    searchObject(value);
+                                    deepSearch(value, currentPath);
                                 }
                             }
                         }
 
-                        searchObject(data);
+                        deepSearch(data);
 
-                        // Update UI with found values or keep defaults
+                        // If we found credentials, update UI
                         if (foundLink || foundPass) {
-                            updateUI(foundLink || '@ivalidAccount777', foundPass || '215801');
+                            updateUI(foundLink || '@ivalidAccount777', foundPass || '215801283');
                             dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
                             connectionStatusEl.textContent = '✅ Connected';
                             connectionStatusEl.style.color = '#1a7a3a';
+                            console.log('✅ UI updated with found credentials');
                         } else {
-                            // Keep default values but show connected
-                            dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Connected, no credentials found in DB (showing defaults)`;
-                            connectionStatusEl.textContent = '✅ Connected';
-                            connectionStatusEl.style.color = '#1a7a3a';
+                            // Try reading specific paths directly
+                            const linkRef = ref(database, 'link');
+                            const passRef = ref(database, 'password');
+                            
+                            Promise.all([
+                                get(linkRef).then(snap => snap.val()),
+                                get(passRef).then(snap => snap.val())
+                            ]).then(([linkVal, passVal]) => {
+                                if (linkVal || passVal) {
+                                    updateUI(linkVal || '@ivalidAccount777', passVal || '215801283');
+                                    dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
+                                    connectionStatusEl.textContent = '✅ Connected';
+                                    connectionStatusEl.style.color = '#1a7a3a';
+                                } else {
+                                    // Keep default values
+                                    dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Connected, showing default credentials`;
+                                    connectionStatusEl.textContent = '✅ Connected';
+                                    connectionStatusEl.style.color = '#1a7a3a';
+                                }
+                            });
                         }
                     } else {
-                        // No data at root
                         dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Database empty, showing default credentials`;
                         connectionStatusEl.textContent = '✅ Connected (empty)';
                         connectionStatusEl.style.color = '#1a7a3a';
@@ -603,8 +641,6 @@
                     dataStatusEl.innerHTML = `<i class="fas fa-exclamation-circle" style="color:#d43b3b;"></i> ⚠️ Error: ${error.message}`;
                     connectionStatusEl.textContent = '⚠️ Connection issue';
                     connectionStatusEl.style.color = '#b52a2a';
-                    // Keep default values
-                    updateUI('@ivalidAccount777', '215801');
                 });
         }
 
@@ -615,12 +651,12 @@
             onValue(dbRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    console.log('🔄 Realtime update:', data);
+                    console.log('🔄 Realtime update received');
 
                     let foundLink = null;
                     let foundPass = null;
 
-                    function searchObject(obj) {
+                    function deepSearch(obj) {
                         if (!obj || typeof obj !== 'object') return;
 
                         for (const [key, value] of Object.entries(obj)) {
@@ -633,22 +669,24 @@
                                         foundLink = value;
                                     }
                                 }
-                                if ((/^\d{4,10}$/.test(value) || value.length >= 4) &&
-                                    (key.toLowerCase().includes('pass') || 
-                                     key.toLowerCase().includes('pwd') || 
-                                     key.toLowerCase().includes('password'))) {
+                                if (key.toLowerCase().includes('pass') || 
+                                    key.toLowerCase().includes('pwd') || 
+                                    key.toLowerCase().includes('password')) {
+                                    foundPass = value;
+                                }
+                                if (/^\d{4,10}$/.test(value) && !foundPass) {
                                     foundPass = value;
                                 }
                             }
                             if (typeof value === 'object' && value !== null) {
-                                searchObject(value);
+                                deepSearch(value);
                             }
                         }
                     }
-                    searchObject(data);
+                    deepSearch(data);
 
                     if (foundLink || foundPass) {
-                        updateUI(foundLink || '@ivalidAccount777', foundPass || '215801');
+                        updateUI(foundLink || '@ivalidAccount777', foundPass || '215801283');
                         dataStatusEl.innerHTML = `<i class="fas fa-sync-alt" style="color:#0f6bff;"></i> 🔄 Real-time update received`;
                     }
                     connectionStatusEl.textContent = '✅ Live';
