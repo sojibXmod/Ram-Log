@@ -1,500 +1,714 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Realtime DB · Firebase</title>
-  <!-- Font Awesome 6 (free) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <!-- Google Font (Inter) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realtime DB · Firebase</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <!-- Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      background: #f2f6fe;
-      font-family: 'Inter', -apple-system, system-ui, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      color: #0b1e3a;
-    }
+        body {
+            background: #f2f6fe;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            color: #0b1e3a;
+        }
 
-    .card {
-      max-width: 780px;
-      width: 100%;
-      background: #ffffff;
-      border-radius: 36px;
-      box-shadow: 0 24px 48px -16px rgba(0, 20, 60, 0.18), 0 8px 20px -4px rgba(0, 0, 0, 0.04);
-      padding: 2rem 2rem 2.2rem;
-      transition: 0.2s;
-    }
+        .card {
+            max-width: 780px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 36px;
+            box-shadow: 0 24px 48px -16px rgba(0, 20, 60, 0.18), 0 8px 20px -4px rgba(0, 0, 0, 0.04);
+            padding: 2rem 2rem 2.2rem;
+            transition: 0.2s;
+        }
 
-    /* navigation */
-    .nav-bar {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1.5rem 2.2rem;
-      border-bottom: 1px solid #e6edf8;
-      padding-bottom: 1rem;
-      margin-bottom: 1.4rem;
-    }
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem 2.2rem;
+            border-bottom: 1px solid #e6edf8;
+            padding-bottom: 1rem;
+            margin-bottom: 1.4rem;
+        }
 
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    .nav-brand i {
-      font-size: 1.7rem;
-      color: #0f6bff;
-      background: #e6efff;
-      padding: 8px;
-      border-radius: 16px;
-    }
+        .nav-brand i {
+            font-size: 1.7rem;
+            color: #0f6bff;
+            background: #e6efff;
+            padding: 8px;
+            border-radius: 16px;
+        }
 
-    .nav-brand span {
-      font-weight: 700;
-      font-size: 1.4rem;
-      letter-spacing: -0.4px;
-      color: #0b1e3a;
-    }
+        .nav-brand span {
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -0.4px;
+            color: #0b1e3a;
+        }
 
-    .nav-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem 1.6rem;
-      font-weight: 500;
-      font-size: 0.92rem;
-      color: #4b6380;
-    }
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem 1.6rem;
+            font-weight: 500;
+            font-size: 0.92rem;
+            color: #4b6380;
+        }
 
-    .nav-links a {
-      color: #4b6380;
-      text-decoration: none;
-      border-bottom: 2px solid transparent;
-      padding-bottom: 3px;
-      transition: 0.15s;
-    }
+        .nav-links a {
+            color: #4b6380;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 3px;
+            transition: 0.15s;
+        }
 
-    .nav-links a:hover {
-      color: #0f6bff;
-      border-bottom-color: #0f6bff;
-    }
+        .nav-links a:hover {
+            color: #0f6bff;
+            border-bottom-color: #0f6bff;
+        }
 
-    .nav-links a.active {
-      color: #0b1e3a;
-      border-bottom-color: #0f6bff;
-      font-weight: 600;
-    }
+        .nav-links a.active {
+            color: #0b1e3a;
+            border-bottom-color: #0f6bff;
+            font-weight: 600;
+        }
 
-    /* ⚠️ error banner – minimal but present */
-    .error-banner {
-      background: #fff2ed;
-      border-left: 6px solid #d43b3b;
-      padding: 0.8rem 1.2rem;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.92rem;
-      color: #632b1d;
-    }
+        .error-banner {
+            background: #fff2ed;
+            border-left: 6px solid #d43b3b;
+            padding: 0.8rem 1.2rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.92rem;
+            color: #632b1d;
+        }
 
-    .error-banner i {
-      font-size: 1.2rem;
-      color: #b52a2a;
-    }
+        .error-banner i {
+            font-size: 1.2rem;
+            color: #b52a2a;
+        }
 
-    .error-banner strong {
-      font-weight: 600;
-    }
+        .error-banner strong {
+            font-weight: 600;
+        }
 
-    /* URL block */
-    .url-block {
-      background: #f1f6fd;
-      border-radius: 60px;
-      padding: 0.6rem 1.6rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.7rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: #1e3d6b;
-      border: 1px solid #dde6f2;
-      margin-bottom: 1.6rem;
-      word-break: break-all;
-      width: auto;
-    }
+        .url-block {
+            background: #f1f6fd;
+            border-radius: 60px;
+            padding: 0.6rem 1.6rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e3d6b;
+            border: 1px solid #dde6f2;
+            margin-bottom: 1.6rem;
+            word-break: break-all;
+            width: auto;
+        }
 
-    .url-block i {
-      color: #0f6bff;
-      font-size: 1rem;
-    }
+        .url-block i {
+            color: #0f6bff;
+            font-size: 1rem;
+        }
 
-    /* warning: public rules */
-    .warning-public {
-      background: #fef8e8;
-      border: 1px solid #f3e0b0;
-      border-radius: 24px;
-      padding: 0.9rem 1.4rem;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.8rem 1.2rem;
-      margin-bottom: 2rem;
-      font-weight: 500;
-      color: #705d1a;
-      font-size: 0.92rem;
-    }
+        .warning-public {
+            background: #fef8e8;
+            border: 1px solid #f3e0b0;
+            border-radius: 24px;
+            padding: 0.9rem 1.4rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.2rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            color: #705d1a;
+            font-size: 0.92rem;
+        }
 
-    .warning-public i {
-      font-size: 1.4rem;
-      color: #b68b1a;
-    }
+        .warning-public i {
+            font-size: 1.4rem;
+            color: #b68b1a;
+        }
 
-    .badge-public {
-      background: #d43b3b18;
-      color: #a12525;
-      font-weight: 700;
-      padding: 0.15rem 1rem;
-      border-radius: 40px;
-      font-size: 0.7rem;
-      letter-spacing: 0.4px;
-      border: 1px solid #d43b3b40;
-      text-transform: uppercase;
-      margin-left: auto;
-    }
+        .badge-public {
+            background: #d43b3b18;
+            color: #a12525;
+            font-weight: 700;
+            padding: 0.15rem 1rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            letter-spacing: 0.4px;
+            border: 1px solid #d43b3b40;
+            text-transform: uppercase;
+            margin-left: auto;
+        }
 
-    /* ********** CREDENTIALS PANEL ********** */
-    .creds-panel {
-      background: #fafcff;
-      border-radius: 28px;
-      border: 1px solid #eef3fc;
-      padding: 1.5rem 1.8rem 1.8rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
-    }
+        .creds-panel {
+            background: #fafcff;
+            border-radius: 28px;
+            border: 1px solid #eef3fc;
+            padding: 1.5rem 1.8rem 1.8rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
+        }
 
-    .cred-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      padding: 0.7rem 0;
-      border-bottom: 1px solid #eaf0f9;
-    }
+        .cred-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid #eaf0f9;
+        }
 
-    .cred-item:last-of-type {
-      border-bottom: none;
-    }
+        .cred-item:last-of-type {
+            border-bottom: none;
+        }
 
-    .cred-label {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      font-weight: 500;
-      color: #1f3b60;
-      font-size: 0.95rem;
-    }
+        .cred-label {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-weight: 500;
+            color: #1f3b60;
+            font-size: 0.95rem;
+        }
 
-    .cred-label i {
-      width: 1.7rem;
-      color: #0f6bff;
-      background: #e6efff;
-      padding: 6px;
-      border-radius: 14px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
+        .cred-label i {
+            width: 1.7rem;
+            color: #0f6bff;
+            background: #e6efff;
+            padding: 6px;
+            border-radius: 14px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
 
-    .cred-value {
-      background: #ffffff;
-      padding: 0.2rem 1.2rem 0.2rem 1.2rem;
-      border-radius: 60px;
-      font-family: 'Inter', monospace;
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: #0b1e3a;
-      border: 1px solid #d8e2f0;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      letter-spacing: 0.2px;
-      background: #ffffff;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.01);
-    }
+        .cred-value {
+            background: #ffffff;
+            padding: 0.2rem 1.2rem 0.2rem 1.2rem;
+            border-radius: 60px;
+            font-family: 'Inter', monospace;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #0b1e3a;
+            border: 1px solid #d8e2f0;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: 0.2px;
+            background: #ffffff;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.01);
+        }
 
-    .cred-value i {
-      font-size: 0.75rem;
-      color: #7b8ea8;
-      background: transparent;
-      padding: 0;
-      border-radius: 0;
-      width: auto;
-    }
+        .cred-value i {
+            font-size: 0.75rem;
+            color: #7b8ea8;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            width: auto;
+        }
 
-    /* extra inline display for both fields (clean, symmetric) */
-    .extra-show {
-      margin-top: 0.8rem;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.6rem 1.2rem;
-      background: #f5f9ff;
-      padding: 0.5rem 1.2rem;
-      border-radius: 60px;
-      font-size: 0.85rem;
-      border: 1px solid #e3ebf6;
-    }
+        .extra-show {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem 1.2rem;
+            background: #f5f9ff;
+            padding: 0.5rem 1.2rem;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            border: 1px solid #e3ebf6;
+        }
 
-    .extra-show .tag {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      color: #2e4b72;
-      font-weight: 500;
-    }
+        .extra-show .tag {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #2e4b72;
+            font-weight: 500;
+        }
 
-    .extra-show .value-chip {
-      background: white;
-      padding: 0.1rem 1rem;
-      border-radius: 40px;
-      border: 1px solid #d0ddee;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
+        .extra-show .value-chip {
+            background: white;
+            padding: 0.1rem 1rem;
+            border-radius: 40px;
+            border: 1px solid #d0ddee;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
 
-    .db-footer {
-      margin-top: 1.8rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      font-size: 0.75rem;
-      color: #617594;
-      padding-top: 0.8rem;
-      border-top: 1px dashed #dbe2ef;
-    }
+        .db-footer {
+            margin-top: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            font-size: 0.75rem;
+            color: #617594;
+            padding-top: 0.8rem;
+            border-top: 1px dashed #dbe2ef;
+        }
 
-    .db-footer i {
-      color: #0f6bff;
-      margin-right: 0.2rem;
-    }
+        .db-footer i {
+            color: #0f6bff;
+            margin-right: 0.2rem;
+        }
 
-    .firebase-tag {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      background: #e9f0fa;
-      padding: 0.15rem 1rem 0.15rem 0.8rem;
-      border-radius: 40px;
-      font-weight: 500;
-      font-size: 0.7rem;
-      color: #1f3f7a;
-    }
+        .firebase-tag {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #e9f0fa;
+            padding: 0.15rem 1rem 0.15rem 0.8rem;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.7rem;
+            color: #1f3f7a;
+        }
 
-    .firebase-tag i {
-      color: #0f6bff;
-    }
+        .firebase-tag i {
+            color: #0f6bff;
+        }
 
-    /* responsive */
-    @media (max-width: 600px) {
-      .card {
-        padding: 1.5rem 1rem;
-      }
-      .nav-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5rem;
-      }
-      .nav-links {
-        justify-content: space-between;
-        gap: 0.2rem;
-        font-size: 0.8rem;
-      }
-      .creds-panel {
-        padding: 1rem;
-      }
-      .cred-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.4rem;
-        padding: 0.9rem 0;
-      }
-      .cred-value {
-        width: 100%;
-        justify-content: space-between;
-        padding: 0.3rem 1rem;
-      }
-      .url-block {
-        width: 100%;
-        font-size: 0.75rem;
-        padding: 0.4rem 1rem;
-      }
-      .warning-public {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.3rem;
-      }
-      .badge-public {
-        margin-left: 0;
-      }
-      .extra-show {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.3rem;
-      }
-    }
-  </style>
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #e6f7e6;
+            padding: 0.2rem 1rem 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #1a7a3a;
+            border: 1px solid #b2dfb2;
+        }
+
+        .live-indicator i {
+            color: #2b9c4a;
+            font-size: 0.6rem;
+        }
+
+        .status-message {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #3b5f7a;
+            background: #f0f6ff;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 1.5rem 1rem;
+            }
+            .nav-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+            .nav-links {
+                justify-content: space-between;
+                gap: 0.2rem;
+                font-size: 0.8rem;
+            }
+            .creds-panel {
+                padding: 1rem;
+            }
+            .cred-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.4rem;
+                padding: 0.9rem 0;
+            }
+            .cred-value {
+                width: 100%;
+                justify-content: space-between;
+                padding: 0.3rem 1rem;
+            }
+            .url-block {
+                width: 100%;
+                font-size: 0.75rem;
+                padding: 0.4rem 1rem;
+            }
+            .warning-public {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.3rem;
+            }
+            .badge-public {
+                margin-left: 0;
+            }
+            .extra-show {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.3rem;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="card">
-  <!-- Navigation: Data, Rules, Backups, Usage, Extensions -->
-  <div class="nav-bar">
-    <div class="nav-brand">
-      <i class="fas fa-database"></i>
-      <span>Realtime DB</span>
+    <div class="card">
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <div class="nav-brand">
+                <i class="fas fa-database"></i>
+                <span>Realtime DB</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="active">Data</a>
+                <a href="#">Rules</a>
+                <a href="#">Backups</a>
+                <a href="#">Usage</a>
+                <a href="#">Extensions</a>
+            </div>
+        </div>
+
+        <!-- Error banner -->
+        <div class="error-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Protect your Realtime Database resources</strong> from abuse, such as billing fraud or phishing
+            </div>
+        </div>
+
+        <!-- Database URL -->
+        <div class="url-block">
+            <i class="fas fa-link"></i>
+            <span>https://fb-hack-fd91b-default-rtdb.asia-southeast1.firebasedatabase.app</span>
+        </div>
+
+        <!-- Public rules warning -->
+        <div class="warning-public">
+            <i class="fas fa-shield-alt"></i>
+            <span><strong>Your security rules are defined as public</strong>, so anyone can steal, modify, or delete data in your database.</span>
+            <span class="badge-public">PUBLIC</span>
+        </div>
+
+        <!-- Credentials Panel -->
+        <div class="creds-panel">
+            <!-- Link -->
+            <div class="cred-item">
+                <div class="cred-label">
+                    <i class="fas fa-key"></i>
+                    <span>Password link</span>
+                </div>
+                <div class="cred-value" id="linkDisplay">
+                    <i class="fas fa-at"></i>
+                    <span id="linkValue">@validAccount</span>
+                    <i class="fas fa-copy" style="opacity:0.35; font-size:0.7rem; margin-left:8px;"></i>
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="cred-item">
+                <div class="cred-label">
+                    <i class="fas fa-lock"></i>
+                    <span>Password</span>
+                </div>
+                <div class="cred-value" id="passDisplay">
+                    <i class="fas fa-hashtag" style="color:#3f6491;"></i>
+                    <span id="passValue">215801</span>
+                    <i class="fas fa-eye" style="opacity:0.3; font-size:0.7rem; margin-left:8px;"></i>
+                </div>
+            </div>
+
+            <!-- Extra inline -->
+            <div class="extra-show">
+                <span class="tag"><i class="fas fa-link"></i> Link:</span>
+                <span class="value-chip" id="extraLink">@validAccount</span>
+                <span class="tag" style="margin-left:0.2rem;"><i class="fas fa-lock"></i> Pass:</span>
+                <span class="value-chip" id="extraPass">215801</span>
+            </div>
+
+            <!-- Live status indicator -->
+            <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                <div class="live-indicator">
+                    <i class="fas fa-circle"></i>
+                    <span id="connectionStatus">⏳ Connecting...</span>
+                </div>
+                <div class="status-message" id="dataStatus">
+                    <i class="fas fa-database"></i> Waiting for data...
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="db-footer">
+            <span><i class="fas fa-database"></i> Firebase · asia-southeast1</span>
+            <span class="firebase-tag">
+                <i class="fas fa-fire"></i> fb-hack-fd91b
+            </span>
+        </div>
     </div>
-    <div class="nav-links">
-      <a href="#" class="active">Data</a>
-      <a href="#">Rules</a>
-      <a href="#">Backups</a>
-      <a href="#">Usage</a>
-      <a href="#">Extensions</a>
-    </div>
-  </div>
 
-  <!-- Error banner (exact text) -->
-  <div class="error-banner">
-    <i class="fas fa-exclamation-triangle"></i>
-    <div>
-      <strong>Protect your Realtime Database resources</strong> from abuse, such as billing fraud or phishing
-    </div>
-  </div>
+    <!-- Firebase SDK imports -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js",
+                "firebase/analytics": "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js"
+            }
+        }
+    </script>
 
-  <!-- Database URL -->
-  <div class="url-block">
-    <i class="fas fa-link"></i>
-    <span>https://fb-hack-fd91b-default-rtdb.asia-southeast1.firebasedatabase.app</span>
-  </div>
+    <script type="module">
+        // ========== FIREBASE IMPORTS ==========
+        import { initializeApp } from "firebase/app";
+        import { getAnalytics } from "firebase/analytics";
+        import { getDatabase, ref, onValue, get, child } from "firebase/database";
 
-  <!-- public rules warning -->
-  <div class="warning-public">
-    <i class="fas fa-shield-alt"></i>
-    <span><strong>Your security rules are defined as public</strong>, so anyone can steal, modify, or delete data in your database.</span>
-    <span class="badge-public">PUBLIC</span>
-  </div>
+        // ========== CONFIG ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyD8d6iSvrdAxeoukIo8fZtbPVVC0mKwIxQ",
+            authDomain: "fb-hack-fd91b.firebaseapp.com",
+            databaseURL: "https://fb-hack-fd91b-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "fb-hack-fd91b",
+            storageBucket: "fb-hack-fd91b.firebasestorage.app",
+            messagingSenderId: "691841510443",
+            appId: "1:691841510443:web:7bb9b5da462b1f14068e6e",
+            measurementId: "G-KYTNW2QVW5"
+        };
 
-  <!-- ********** PASSWORD & LINK (ONLY THIS) ********** -->
-  <div class="creds-panel">
-    <!-- Link: @validAccount -->
-    <div class="cred-item">
-      <div class="cred-label">
-        <i class="fas fa-key"></i>
-        <span>Password link</span>
-      </div>
-      <div class="cred-value">
-        <i class="fas fa-at"></i> 
-        <span>@validAccount</span>
-        <i class="fas fa-copy" style="opacity:0.35; font-size:0.7rem; margin-left:8px;"></i>
-      </div>
-    </div>
+        // ========== INIT FIREBASE ==========
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
 
-    <!-- Password: 215801 -->
-    <div class="cred-item">
-      <div class="cred-label">
-        <i class="fas fa-lock"></i>
-        <span>Password</span>
-      </div>
-      <div class="cred-value">
-        <i class="fas fa-hashtag" style="color:#3f6491;"></i>
-        <span>215801</span>
-        <i class="fas fa-eye" style="opacity:0.3; font-size:0.7rem; margin-left:8px;"></i>
-      </div>
-    </div>
+        // ========== DOM REFS ==========
+        const linkValueEl = document.getElementById('linkValue');
+        const passValueEl = document.getElementById('passValue');
+        const extraLinkEl = document.getElementById('extraLink');
+        const extraPassEl = document.getElementById('extraPass');
+        const connectionStatusEl = document.getElementById('connectionStatus');
+        const dataStatusEl = document.getElementById('dataStatus');
 
-    <!-- extra inline show (clean) – but still only the two values -->
-    <div class="extra-show">
-      <span class="tag"><i class="fas fa-link"></i> Link:</span>
-      <span class="value-chip">@validAccount</span>
-      <span class="tag" style="margin-left:0.2rem;"><i class="fas fa-lock"></i> Pass:</span>
-      <span class="value-chip">215801</span>
-    </div>
-  </div>
+        // ========== UPDATE UI ==========
+        function updateUI(link, password) {
+            if (link) {
+                linkValueEl.textContent = link;
+                extraLinkEl.textContent = link;
+            }
+            if (password) {
+                passValueEl.textContent = password;
+                extraPassEl.textContent = password;
+            }
+        }
 
-  <!-- footer (neutral) -->
-  <div class="db-footer">
-    <span><i class="fas fa-database"></i> Firebase · asia-southeast1</span>
-    <span class="firebase-tag">
-      <i class="fas fa-fire"></i> fb-hack-fd91b
-    </span>
-  </div>
+        // ========== READ FROM DATABASE ==========
+        // Try to read from multiple possible paths where credentials might be stored
+        function fetchCredentials() {
+            const dbRef = ref(database);
 
-  <!-- everything else is removed: no extra warnings, no redundant text. 
-       Only the required password + link are shown (plus the mandatory UI skeleton) -->
-</div>
+            // First try: direct root read
+            get(dbRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    console.log('📦 Root data:', data);
 
-<!-- Firebase SDK imports and initialization (connected to Realtime Database) -->
-<script type="importmap">
-  {
-    "imports": {
-      "firebase/app": "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js",
-      "firebase/analytics": "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js",
-      "firebase/database": "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js"
-    }
-  }
-</script>
+                    // Try to find link and password in the data
+                    let foundLink = null;
+                    let foundPass = null;
 
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "firebase/app";
-  import { getAnalytics } from "firebase/analytics";
-  import { getDatabase, ref, onValue } from "firebase/database";
+                    // Common paths where credentials might be stored
+                    const possiblePaths = [
+                        'passwordLink', 'link', 'account', 'email', 'user/link', 'credentials/link',
+                        'password', 'pass', 'pwd', 'credentials/password', 'user/password'
+                    ];
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyD8d6iSvrdAxeoukIo8fZtbPVVC0mKwIxQ",
-    authDomain: "fb-hack-fd91b.firebaseapp.com",
-    databaseURL: "https://fb-hack-fd91b-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "fb-hack-fd91b",
-    storageBucket: "fb-hack-fd91b.firebasestorage.app",
-    messagingSenderId: "691841510443",
-    appId: "1:691841510443:web:7bb9b5da462b1f14068e6e",
-    measurementId: "G-KYTNW2QVW5"
-  };
+                    // Search recursively for values that look like credentials
+                    function searchObject(obj, path = '') {
+                        if (!obj || typeof obj !== 'object') return;
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const database = getDatabase(app);
+                        for (const [key, value] of Object.entries(obj)) {
+                            const currentPath = path ? `${path}/${key}` : key;
 
-  // (Optional) silent connection – just to show it's alive
-  // We're not displaying any extra data, but the connection is established.
-  console.log("🔥 Firebase Realtime Database connected successfully.");
-  
-  // You can optionally read data silently (no UI impact)
-  const testRef = ref(database, '/');
-  onValue(testRef, (snapshot) => {
-    // Just a silent ping – no UI changes.
-    // This proves the database is connected and working.
-    console.log("✅ Database is live. Snapshot exists:", snapshot.exists());
-  }, (error) => {
-    console.warn("⚠️ Database read error (but connection is active):", error);
-  });
-</script>
+                            if (typeof value === 'string') {
+                                // Check if this looks like a link/account
+                                if (value.includes('@') && (key.toLowerCase().includes('link') || key.toLowerCase().includes('account') || key.toLowerCase().includes('email'))) {
+                                    foundLink = value;
+                                }
+                                // Check if this looks like a password (numeric or short string)
+                                if ((/^\d{4,8}$/.test(value) || (value.length >= 4 && value.length <= 10)) &&
+                                    (key.toLowerCase().includes('pass') || key.toLowerCase().includes('pwd') || key.toLowerCase().includes('password'))) {
+                                    foundPass = value;
+                                }
+                                // Specific match for @validAccount or 215801
+                                if (value === '@validAccount') foundLink = value;
+                                if (value === '215801') foundPass = value;
+                            }
+
+                            if (typeof value === 'object' && value !== null) {
+                                searchObject(value, currentPath);
+                            }
+                        }
+                    }
+
+                    searchObject(data);
+
+                    // If we found both, update UI
+                    if (foundLink || foundPass) {
+                        updateUI(foundLink || '@validAccount', foundPass || '215801');
+                        dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
+                        connectionStatusEl.textContent = '✅ Connected';
+                        connectionStatusEl.style.color = '#1a7a3a';
+                        return;
+                    }
+
+                    // If we didn't find specific values, try direct paths
+                    const linkRef = ref(database, 'link');
+                    const passRef = ref(database, 'password');
+
+                    Promise.all([
+                        get(linkRef).then(snap => snap.val()),
+                        get(passRef).then(snap => snap.val())
+                    ]).then(([linkVal, passVal]) => {
+                        if (linkVal || passVal) {
+                            updateUI(linkVal || '@validAccount', passVal || '215801');
+                            dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
+                            connectionStatusEl.textContent = '✅ Connected';
+                            connectionStatusEl.style.color = '#1a7a3a';
+                        } else {
+                            // Keep default values but show we're connected
+                            dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Connected, no credentials found in DB (showing defaults)`;
+                            connectionStatusEl.textContent = '✅ Connected';
+                            connectionStatusEl.style.color = '#1a7a3a';
+                        }
+                    });
+                } else {
+                    // No data at root
+                    dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Database empty, showing default credentials`;
+                    connectionStatusEl.textContent = '✅ Connected (empty)';
+                    connectionStatusEl.style.color = '#1a7a3a';
+                }
+            }).catch((error) => {
+                console.error('❌ Error reading database:', error);
+                dataStatusEl.innerHTML = `<i class="fas fa-exclamation-circle" style="color:#d43b3b;"></i> ⚠️ Error: ${error.message}`;
+                connectionStatusEl.textContent = '⚠️ Connection issue';
+                connectionStatusEl.style.color = '#b52a2a';
+                // Still show default values
+                updateUI('@validAccount', '215801');
+            });
+        }
+
+        // ========== SETUP REAL-TIME LISTENER ==========
+        function setupRealtimeListener() {
+            const dbRef = ref(database);
+
+            onValue(dbRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    console.log('🔄 Realtime update:', data);
+
+                    let foundLink = null;
+                    let foundPass = null;
+
+                    function searchObject(obj) {
+                        if (!obj || typeof obj !== 'object') return;
+                        for (const [key, value] of Object.entries(obj)) {
+                            if (typeof value === 'string') {
+                                if (value === '@validAccount') foundLink = value;
+                                if (value === '215801') foundPass = value;
+                                if (value.includes('@') && (key.toLowerCase().includes('link') || key.toLowerCase().includes('account') || key.toLowerCase().includes('email'))) {
+                                    foundLink = value;
+                                }
+                                if ((/^\d{4,8}$/.test(value) || (value.length >= 4 && value.length <= 10)) &&
+                                    (key.toLowerCase().includes('pass') || key.toLowerCase().includes('pwd') || key.toLowerCase().includes('password'))) {
+                                    foundPass = value;
+                                }
+                            }
+                            if (typeof value === 'object' && value !== null) {
+                                searchObject(value);
+                            }
+                        }
+                    }
+                    searchObject(data);
+
+                    if (foundLink || foundPass) {
+                        updateUI(foundLink || '@validAccount', foundPass || '215801');
+                        dataStatusEl.innerHTML = `<i class="fas fa-sync-alt" style="color:#0f6bff;"></i> 🔄 Real-time update received`;
+                    }
+                    connectionStatusEl.textContent = '✅ Live';
+                    connectionStatusEl.style.color = '#1a7a3a';
+                }
+            }, (error) => {
+                console.warn('⚠️ Realtime listener error:', error);
+            });
+        }
+
+        // ========== START ==========
+        console.log('🚀 Firebase app initialized. Database URL:', firebaseConfig.databaseURL);
+
+        // First, try to fetch data
+        fetchCredentials();
+
+        // Then set up real-time listener
+        setTimeout(() => {
+            setupRealtimeListener();
+        }, 500);
+
+        // Also try direct read of specific paths after a moment
+        setTimeout(() => {
+            // Try to read from common paths directly
+            const paths = ['/', '/link', '/password', '/credentials', '/user'];
+            paths.forEach(path => {
+                const pathRef = ref(database, path);
+                get(pathRef).then(snap => {
+                    if (snap.exists()) {
+                        const val = snap.val();
+                        if (typeof val === 'string') {
+                            if (val.includes('@') || val === '@validAccount') {
+                                linkValueEl.textContent = val;
+                                extraLinkEl.textContent = val;
+                            }
+                            if (val === '215801' || /^\d{6}$/.test(val)) {
+                                passValueEl.textContent = val;
+                                extraPassEl.textContent = val;
+                            }
+                        }
+                    }
+                }).catch(() => {});
+            });
+        }, 1000);
+
+        console.log('✅ Firebase Realtime Database is active and listening.');
+        console.log('📝 Looking for credentials in the database...');
+    </script>
 
 </body>
 </html>
