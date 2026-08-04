@@ -1,4 +1,6 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Realtime DB · Firebase</title>
@@ -7,7 +9,7 @@
     <!-- Google Font (Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -377,22 +379,45 @@
             }
         }
     </style>
-<script src="https://www.googletagmanager.com/gtag/js?l=dataLayer&amp;id=G-KYTNW2QVW5" async=""></script></head>
+</head>
 <body>
 
     <div class="card">
         <!-- Navigation -->
-        
-
+        <div class="nav-bar">
+            <div class="nav-brand">
+                <i class="fas fa-database"></i>
+                <span>Realtime DB</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="active">Data</a>
+                <a href="#">Rules</a>
+                <a href="#">Backups</a>
+                <a href="#">Usage</a>
+                <a href="#">Extensions</a>
+            </div>
+        </div>
 
         <!-- Error banner -->
-        
+        <div class="error-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Protect your Realtime Database resources</strong> from abuse, such as billing fraud or phishing
+            </div>
+        </div>
 
         <!-- Database URL -->
-        
+        <div class="url-block">
+            <i class="fas fa-link"></i>
+            <span>https://fb-hack-fd91b-default-rtdb.asia-southeast1.firebasedatabase.app</span>
+        </div>
 
         <!-- Public rules warning -->
-        
+        <div class="warning-public">
+            <i class="fas fa-shield-alt"></i>
+            <span><strong>Your security rules are defined as public</strong>, so anyone can steal, modify, or delete data in your database.</span>
+            <span class="badge-public">PUBLIC</span>
+        </div>
 
         <!-- Credentials Panel -->
         <div class="creds-panel">
@@ -434,14 +459,21 @@
             <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                 <div class="live-indicator">
                     <i class="fas fa-circle"></i>
-                    <span id="connectionStatus" style="color: rgb(26, 122, 58);">✅ Live</span>
+                    <span id="connectionStatus">⏳ Connecting...</span>
                 </div>
-                <div class="status-message" id="dataStatus"><i class="fas fa-sync-alt" style="color:#0f6bff;"></i> 🔄 Real-time update received</div>
+                <div class="status-message" id="dataStatus">
+                    <i class="fas fa-database"></i> Waiting for data...
+                </div>
             </div>
         </div>
 
         <!-- Footer -->
-        
+        <div class="db-footer">
+            <span><i class="fas fa-database"></i> Firebase · asia-southeast1</span>
+            <span class="firebase-tag">
+                <i class="fas fa-fire"></i> fb-hack-fd91b
+            </span>
+        </div>
     </div>
 
     <!-- Firebase SDK imports -->
@@ -459,7 +491,7 @@
         // ========== FIREBASE IMPORTS ==========
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
-        import { getDatabase, ref, onValue, get, child } from "firebase/database";
+        import { getDatabase, ref, onValue, get } from "firebase/database";
 
         // ========== CONFIG ==========
         const firebaseConfig = {
@@ -499,99 +531,81 @@
         }
 
         // ========== READ FROM DATABASE ==========
-        // Try to read from multiple possible paths where credentials might be stored
         function fetchCredentials() {
             const dbRef = ref(database);
 
             // First try: direct root read
-            get(dbRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    console.log('📦 Root data:', data);
+            get(dbRef)
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        console.log('📦 Root data:', data);
 
-                    // Try to find link and password in the data
-                    let foundLink = null;
-                    let foundPass = null;
+                        let foundLink = null;
+                        let foundPass = null;
 
-                    // Common paths where credentials might be stored
-                    const possiblePaths = [
-                        'passwordLink', 'link', 'account', 'email', 'user/link', 'credentials/link',
-                        'password', 'pass', 'pwd', 'credentials/password', 'user/password'
-                    ];
+                        // Recursive search function
+                        function searchObject(obj) {
+                            if (!obj || typeof obj !== 'object') return;
 
-                    // Search recursively for values that look like credentials
-                    function searchObject(obj, path = '') {
-                        if (!obj || typeof obj !== 'object') return;
-
-                        for (const [key, value] of Object.entries(obj)) {
-                            const currentPath = path ? `${path}/${key}` : key;
-
-                            if (typeof value === 'string') {
-                                // Check if this looks like a link/account
-                                if (value.includes('@') && (key.toLowerCase().includes('link') || key.toLowerCase().includes('account') || key.toLowerCase().includes('email'))) {
-                                    foundLink = value;
+                            for (const [key, value] of Object.entries(obj)) {
+                                // If value is a string, check if it looks like credentials
+                                if (typeof value === 'string') {
+                                    // Check for link patterns (contains @ or looks like account)
+                                    if (value.includes('@') || 
+                                        (key.toLowerCase().includes('link') || 
+                                         key.toLowerCase().includes('account') || 
+                                         key.toLowerCase().includes('email'))) {
+                                        // Only set if not already found or if it's more specific
+                                        if (!foundLink || value.includes('@')) {
+                                            foundLink = value;
+                                        }
+                                    }
+                                    // Check for password patterns
+                                    if ((/^\d{4,10}$/.test(value) || value.length >= 4) &&
+                                        (key.toLowerCase().includes('pass') || 
+                                         key.toLowerCase().includes('pwd') || 
+                                         key.toLowerCase().includes('password'))) {
+                                        foundPass = value;
+                                    }
                                 }
-                                // Check if this looks like a password (numeric or short string)
-                                if ((/^\d{4,8}$/.test(value) || (value.length >= 4 && value.length <= 10)) &&
-                                    (key.toLowerCase().includes('pass') || key.toLowerCase().includes('pwd') || key.toLowerCase().includes('password'))) {
-                                    foundPass = value;
-                                }
-                                // Specific match for @validAccount or 215801
-                                if (value === '@validAccount') foundLink = value;
-                                if (value === '215801') foundPass = value;
-                            }
 
-                            if (typeof value === 'object' && value !== null) {
-                                searchObject(value, currentPath);
+                                // Recursively search nested objects
+                                if (typeof value === 'object' && value !== null) {
+                                    searchObject(value);
+                                }
                             }
                         }
-                    }
 
-                    searchObject(data);
+                        searchObject(data);
 
-                    // If we found both, update UI
-                    if (foundLink || foundPass) {
-                        updateUI(foundLink || '@validAccount', foundPass || '215801');
-                        dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
-                        connectionStatusEl.textContent = '✅ Connected';
-                        connectionStatusEl.style.color = '#1a7a3a';
-                        return;
-                    }
-
-                    // If we didn't find specific values, try direct paths
-                    const linkRef = ref(database, 'link');
-                    const passRef = ref(database, 'password');
-
-                    Promise.all([
-                        get(linkRef).then(snap => snap.val()),
-                        get(passRef).then(snap => snap.val())
-                    ]).then(([linkVal, passVal]) => {
-                        if (linkVal || passVal) {
-                            updateUI(linkVal || '@validAccount', passVal || '215801');
+                        // Update UI with found values or keep defaults
+                        if (foundLink || foundPass) {
+                            updateUI(foundLink || '@ivalidAccount777', foundPass || '215801');
                             dataStatusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#2b9c4a;"></i> ✅ Data loaded from database`;
                             connectionStatusEl.textContent = '✅ Connected';
                             connectionStatusEl.style.color = '#1a7a3a';
                         } else {
-                            // Keep default values but show we're connected
+                            // Keep default values but show connected
                             dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Connected, no credentials found in DB (showing defaults)`;
                             connectionStatusEl.textContent = '✅ Connected';
                             connectionStatusEl.style.color = '#1a7a3a';
                         }
-                    });
-                } else {
-                    // No data at root
-                    dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Database empty, showing default credentials`;
-                    connectionStatusEl.textContent = '✅ Connected (empty)';
-                    connectionStatusEl.style.color = '#1a7a3a';
-                }
-            }).catch((error) => {
-                console.error('❌ Error reading database:', error);
-                dataStatusEl.innerHTML = `<i class="fas fa-exclamation-circle" style="color:#d43b3b;"></i> ⚠️ Error: ${error.message}`;
-                connectionStatusEl.textContent = '⚠️ Connection issue';
-                connectionStatusEl.style.color = '#b52a2a';
-                // Still show default values
-                updateUI('@validAccount', '215801');
-            });
+                    } else {
+                        // No data at root
+                        dataStatusEl.innerHTML = `<i class="fas fa-info-circle"></i> ℹ️ Database empty, showing default credentials`;
+                        connectionStatusEl.textContent = '✅ Connected (empty)';
+                        connectionStatusEl.style.color = '#1a7a3a';
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ Error reading database:', error);
+                    dataStatusEl.innerHTML = `<i class="fas fa-exclamation-circle" style="color:#d43b3b;"></i> ⚠️ Error: ${error.message}`;
+                    connectionStatusEl.textContent = '⚠️ Connection issue';
+                    connectionStatusEl.style.color = '#b52a2a';
+                    // Keep default values
+                    updateUI('@ivalidAccount777', '215801');
+                });
         }
 
         // ========== SETUP REAL-TIME LISTENER ==========
@@ -608,15 +622,21 @@
 
                     function searchObject(obj) {
                         if (!obj || typeof obj !== 'object') return;
+
                         for (const [key, value] of Object.entries(obj)) {
                             if (typeof value === 'string') {
-                                if (value === '@validAccount') foundLink = value;
-                                if (value === '215801') foundPass = value;
-                                if (value.includes('@') && (key.toLowerCase().includes('link') || key.toLowerCase().includes('account') || key.toLowerCase().includes('email'))) {
-                                    foundLink = value;
+                                if (value.includes('@') || 
+                                    key.toLowerCase().includes('link') || 
+                                    key.toLowerCase().includes('account') || 
+                                    key.toLowerCase().includes('email')) {
+                                    if (!foundLink || value.includes('@')) {
+                                        foundLink = value;
+                                    }
                                 }
-                                if ((/^\d{4,8}$/.test(value) || (value.length >= 4 && value.length <= 10)) &&
-                                    (key.toLowerCase().includes('pass') || key.toLowerCase().includes('pwd') || key.toLowerCase().includes('password'))) {
+                                if ((/^\d{4,10}$/.test(value) || value.length >= 4) &&
+                                    (key.toLowerCase().includes('pass') || 
+                                     key.toLowerCase().includes('pwd') || 
+                                     key.toLowerCase().includes('password'))) {
                                     foundPass = value;
                                 }
                             }
@@ -628,7 +648,7 @@
                     searchObject(data);
 
                     if (foundLink || foundPass) {
-                        updateUI(foundLink || '@validAccount', foundPass || '215801');
+                        updateUI(foundLink || '@ivalidAccount777', foundPass || '215801');
                         dataStatusEl.innerHTML = `<i class="fas fa-sync-alt" style="color:#0f6bff;"></i> 🔄 Real-time update received`;
                     }
                     connectionStatusEl.textContent = '✅ Live';
@@ -642,42 +662,17 @@
         // ========== START ==========
         console.log('🚀 Firebase app initialized. Database URL:', firebaseConfig.databaseURL);
 
-        // First, try to fetch data
+        // Fetch credentials
         fetchCredentials();
 
-        // Then set up real-time listener
+        // Set up real-time listener
         setTimeout(() => {
             setupRealtimeListener();
         }, 500);
-
-        // Also try direct read of specific paths after a moment
-        setTimeout(() => {
-            // Try to read from common paths directly
-            const paths = ['/', '/link', '/password', '/credentials', '/user'];
-            paths.forEach(path => {
-                const pathRef = ref(database, path);
-                get(pathRef).then(snap => {
-                    if (snap.exists()) {
-                        const val = snap.val();
-                        if (typeof val === 'string') {
-                            if (val.includes('@') || val === '@validAccount') {
-                                linkValueEl.textContent = val;
-                                extraLinkEl.textContent = val;
-                            }
-                            if (val === '215801' || /^\d{6}$/.test(val)) {
-                                passValueEl.textContent = val;
-                                extraPassEl.textContent = val;
-                            }
-                        }
-                    }
-                }).catch(() => {});
-            });
-        }, 1000);
 
         console.log('✅ Firebase Realtime Database is active and listening.');
         console.log('📝 Looking for credentials in the database...');
     </script>
 
-
-
-</body></html>
+</body>
+</html>
