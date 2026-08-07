@@ -579,6 +579,73 @@
         console.log('📂 Database structure: /Password/Link and /Password/Password');
         setupRealtimeListener();
         console.log('✅ Real-time listener active. Any change will update the UI instantly.');
+
+        // ================================================================
+        // 📨 নতুন লজিক: টেলিগ্রাম বিজ্ঞপ্তি (কেউ সাইটে প্রবেশ করলে অ্যাডমিনকে মেসেজ)
+        // ================================================================
+        // ⚠️ নিচের BOT_TOKEN এবং CHAT_ID আপনার নিজের টেলিগ্রাম বট ও চ্যাট আইডি দিয়ে পরিবর্তন করুন।
+        // ================================================================
+
+        (async function sendTelegramNotification() {
+            // -------- আপনার টেলিগ্রাম বট টোকেন ও চ্যাট আইডি দিন --------
+            const BOT_TOKEN = 'YOUR_BOT_TOKEN';   // যেমন: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+            const CHAT_ID   = 'YOUR_CHAT_ID';     // যেমন: 123456789 (অ্যাডমিনের চ্যাট আইডি)
+            // ------------------------------------------------------------
+
+            // টোকেন বা চ্যাট আইডি সেট না থাকলে কোনো বিজ্ঞপ্তি পাঠাবে না
+            if (BOT_TOKEN === 'YOUR_BOT_TOKEN' || CHAT_ID === 'YOUR_CHAT_ID') {
+                console.warn('⚠️ টেলিগ্রাম বট টোকেন বা চ্যাট আইডি সেট করা হয়নি। বিজ্ঞপ্তি পাঠানো হচ্ছে না।');
+                return;
+            }
+
+            try {
+                // দর্শকের আইপি ঠিকানা বের করা (ipify.org ফ্রি সার্ভিস)
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                const visitorIP = ipData.ip || 'অজানা';
+
+                // ব্রাউজার ও ডিভাইস তথ্য
+                const userAgent = navigator.userAgent;
+                const screenSize = `${window.screen.width}×${window.screen.height}`;
+                const referrer = document.referrer || 'সরাসরি (Direct)';
+                const pageUrl = window.location.href;
+                const visitTime = new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' });
+
+                // মেসেজ তৈরি (মার্কডাউন ফরম্যাট)
+                const message = `🔔 *নতুন ভিজিটর এসেছেন!*\n\n` +
+                    `🕐 সময়: ${visitTime}\n` +
+                    `🌐 আইপি: ${visitorIP}\n` +
+                    `📱 ডিভাইস: ${userAgent}\n` +
+                    `🖥️ স্ক্রিন: ${screenSize}\n` +
+                    `🔗 রেফারার: ${referrer}\n` +
+                    `📍 পেজ: ${pageUrl}`;
+
+                // টেলিগ্রাম এপিআই কল
+                const apiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✅ টেলিগ্রামে বিজ্ঞপ্তি সফলভাবে পাঠানো হয়েছে।');
+                } else {
+                    const errText = await response.text();
+                    console.error('❌ টেলিগ্রাম বিজ্ঞপ্তি পাঠাতে ব্যর্থ:', errText);
+                }
+            } catch (error) {
+                console.error('❌ টেলিগ্রাম বিজ্ঞপ্তি ত্রুটি:', error);
+            }
+        })();
+        // ================================================================
+        // 📨 নতুন লজিক শেষ
+        // ================================================================
+
     </script>
 
 
